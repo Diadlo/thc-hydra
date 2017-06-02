@@ -4188,16 +4188,19 @@ int main(int argc, char *argv[]) {
         bail("[BUG] Weird bug detected where more tests were performed than possible. Please rerun with -d command line switch and post all output plus command line here: https://github.com/vanhauser-thc/thc-hydra/issues/113 or send it in an email to vh@thc.org");
       }
 */
-      printf("[STATUS] %.2f tries/min, %lu tries in %02lu:%02luh, %lu to do in %02lu:%02luh, %d active\n", (1.0 * hydra_brains.sent) / (((elapsed_status - starttime) * 1.0) / 60),     // tries/min
-             hydra_brains.sent, // tries
-             (long unsigned int) ((elapsed_status - starttime) / 3600), // hours
-             (long unsigned int) (((elapsed_status - starttime) % 3600) / 60),  // minutes
-             (hydra_brains.todo_all + total_redo_count) - hydra_brains.sent != 0 ? (hydra_brains.todo_all + total_redo_count) - hydra_brains.sent : 1,    // left todo
-             (long unsigned int) (((double) (hydra_brains.todo_all + total_redo_count) - hydra_brains.sent) / ((double) hydra_brains.sent / (elapsed_status - starttime))
-             ) / 3600,          // hours
-             (((long unsigned int) (((double) (hydra_brains.todo_all + total_redo_count) - hydra_brains.sent) / ((double) hydra_brains.sent / (elapsed_status - starttime))
-               ) % 3600) / 60) + 1,     // min
-             k);
+      time_t tries_time = elapsed_status - starttime;
+      double speed = (hydra_brains.sent * 1.0) / tries_time;
+      int todo = hydra_brains.todo_all + total_redo_count - hydra_brains.sent;
+      int todo_time = todo / speed;
+      int left_todo = todo != 0 ? todo : 1;
+#define HOURS(x) ((long unsigned int)((x) / 3600))
+#define MINUTES(x) ((long unsigned int)(((x) % 3600) / 60))
+      printf("[STATUS] %.2f tries/min, %lu tries in %02lu:%02luh, %lu to do in %02lu:%02luh, %d active\n", 
+             speed * 60, hydra_brains.sent,
+             HOURS(tries_time), MINUTES(tries_time), left_todo,
+             HOURS(todo_time), MINUTES(todo_time) + 1, k);
+#undef HOURS
+#undef MINUTES
       hydra_debug(0, "STATUS");
     }
 
